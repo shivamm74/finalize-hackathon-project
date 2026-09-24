@@ -10,7 +10,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { PageHeader } from "@/components/shared/page-header"
 import { DietaryBadges, UrgencyBadge } from "@/components/shared/meta-badges"
 import { analyzeDonationText } from "@/lib/ai-intake"
-import { createDonationAction } from "@/lib/donations/actions"
 import { donations as seed } from "@/lib/mock-data"
 import type { AIAnalysis, Donation } from "@/types"
 
@@ -45,13 +44,18 @@ export default function NewDonationPage() {
       description: text,
     }
     try {
-      const response = await createDonationAction(d)
-      if (response.error || !response.donation) {
-        toast.error(response.error ?? "Could not save donation")
+      const response = await fetch("/api/donations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(d),
+      })
+      const payload = await response.json()
+      if (!response.ok || !payload.donation) {
+        toast.error(payload.error ?? "Could not save donation")
         return
       }
       toast.success(`${d.code} posted and saved`)
-      router.push(`/donations/${response.donation.id}`)
+      router.push(`/donations/${payload.donation.id}`)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not save donation")
     }
