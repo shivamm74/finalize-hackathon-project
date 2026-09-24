@@ -1,9 +1,30 @@
 import type { AIAnalysis } from "@/types"
 
+const foodTerms = [
+  "rice", "dal", "curry", "meal", "meals", "food", "lunch", "dinner", "breakfast",
+  "bread", "sandwich", "salad", "soup", "vegetable", "veggie", "fruit", "produce",
+  "milk", "yogurt", "pastry", "cake", "bread", "chicken", "meat", "pasta", "roti",
+  "chapati", "sabzi", "biryani", "snack", "grocery", "beverage", "drink",
+]
+
 export function analyzeDonationText(raw: string): AIAnalysis {
-  const text = raw.toLowerCase()
+  const normalized = raw.trim()
+  if (normalized.length < 8) throw new Error("Please describe the food in more detail.")
+  if (normalized.length > 500) throw new Error("Description must be 500 characters or fewer.")
+
+  const text = normalized.toLowerCase()
+  const words = text.match(/[a-z]{2,}/g) ?? []
+  const hasFoodTerm = foodTerms.some((term) => text.includes(term))
+  const looksLikeGibberish = words.length > 0 && words.every((word) => !/[aeiou]/.test(word))
+  if (!hasFoodTerm || looksLikeGibberish) {
+    throw new Error("Enter a valid food description, such as ‘45 meals of dal rice and vegetables’." )
+  }
+
   const mealMatch = text.match(/(\d+)\s*(meals?|trays?|portions?|boxes?|items?)/)
   const estimatedMeals = mealMatch ? Number(mealMatch[1]) : 45
+  if (!Number.isSafeInteger(estimatedMeals) || estimatedMeals < 1 || estimatedMeals > 1_000_000_000) {
+    throw new Error("Enter a quantity between 1 and 1,000,000,000.")
+  }
 
   const dietary = [] as AIAnalysis["dietary"]
   if (text.includes("vegan")) dietary.push("vegan")

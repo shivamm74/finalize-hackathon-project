@@ -24,7 +24,12 @@ export default function NewDonationPage() {
 
   function analyze() {
     if (!text.trim()) return toast.error("Describe the food first.")
-    setResult(analyzeDonationText(text))
+    try {
+      setResult(analyzeDonationText(text))
+    } catch (error) {
+      setResult(null)
+      toast.error(error instanceof Error ? error.message : "Enter a valid food description.")
+    }
   }
 
   async function post() {
@@ -54,7 +59,17 @@ export default function NewDonationPage() {
       <PageHeader title="New donation" description="Describe the surplus food in plain words. We extract the details." />
       <Card>
         <CardContent className="flex flex-col gap-3 p-5">
-          <Textarea rows={5} value={text} onChange={(e) => setText(e.target.value)} placeholder={sample} />
+          <Textarea
+            rows={5}
+            value={text}
+            maxLength={500}
+            onChange={(e) => setText(e.target.value)}
+            placeholder={sample}
+            aria-describedby="donation-description-help"
+          />
+          <p id="donation-description-help" className="text-xs text-muted-foreground">
+            Describe the food, quantity, and pickup details. {text.length}/500 characters.
+          </p>
           <div className="flex gap-2">
             <Button onClick={analyze}><Sparkles data-icon="inline-start" />Analyze</Button>
             <Button variant="outline" onClick={() => setText(sample)}>Use sample</Button>
