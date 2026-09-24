@@ -57,6 +57,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     async function load() {
       const { data, error } = await supabase.from("donations").select("*").order("created_at", { ascending: false })
       if (active && !error && data) setDonations(data.map(donationFromRow))
+      if (error && !error.message.toLowerCase().includes("schema cache")) {
+        console.error("[v0] Could not load donations:", error.message)
+      }
       setLoading(false)
     }
     void load()
@@ -64,8 +67,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [supabase])
 
   const addDonation = useCallback(async (d: Donation) => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error("Please sign in before posting a donation.")
+    let { data: { user } } = await supabase.auth.getUser()
+
+    // Refresh once because a valid server-rendered session can be stale in the
+    // browser client immediately after login or email confirmation.
+    if (!user) {
+      const refreshed = await supabase.auth.refreshSession()
+      user = refreshed.data.user
+    }
+
+    if (!user) throw new Error("Your session expired. Refresh the page and sign in again.")
+
     const { data, error } = await supabase.from("donations").insert({
       code: d.code, created_by: user.id, donor_name: d.donor.name, donor_type: d.donor.type,
       donor_address: d.donor.address, food_name: d.foodName, category: d.category, quantity: d.quantity,

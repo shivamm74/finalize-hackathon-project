@@ -10,22 +10,26 @@ function asRole(value: unknown): UserRole {
 }
 
 export async function getCurrentProfile(): Promise<Profile | null> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
-  if (!user) return null
+    if (!user) return null
 
-  const { data } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .maybeSingle()
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .maybeSingle()
 
-  if (data) return data as Profile
+    if (data) return data as Profile
+    if (error && !error.message.toLowerCase().includes("schema cache")) {
+      console.error("[v0] Profile lookup failed:", error.message)
+    }
 
-  const fallback: Profile = {
+    const fallback: Profile = {
     id: user.id,
     email: user.email ?? null,
     display_name:
@@ -41,7 +45,7 @@ export async function getCurrentProfile(): Promise<Profile | null> {
     updated_at: user.created_at,
   }
 
-  await supabase.from("profiles").upsert({
+  const { error: upsertError } = await supabase.from("profiles").upsert({
     id: fallback.id,
     email: fallback.email,
     display_name: fallback.display_name,
@@ -50,5 +54,14 @@ export async function getCurrentProfile(): Promise<Profile | null> {
     avatar_initials: fallback.avatar_initials,
   })
 
-  return fallback
+  if (upsertError && !upsertError.message.toLowerCase().includes("schema cache")) {
+    console.error("[v0] Profile persistence failed:", upsertError.message)
+  }
+
+    return fallback
+  } catch (error) {
+    console.error("[v0] Profile session unavailable:", error)
+    return null
+  }
 }
+
