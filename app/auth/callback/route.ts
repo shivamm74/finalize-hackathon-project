@@ -8,7 +8,12 @@ export async function GET(request: Request) {
 
   if (code) {
     const supabase = await createClient()
-    await supabase.auth.exchangeCodeForSession(code)
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    if (error) {
+      const loginUrl = new URL("/login", origin)
+      loginUrl.searchParams.set("error", "The confirmation link is invalid or expired. Please sign in again.")
+      return NextResponse.redirect(loginUrl)
+    }
   }
 
   const url = new URL(next.startsWith("/") ? next : "/dashboard", origin)

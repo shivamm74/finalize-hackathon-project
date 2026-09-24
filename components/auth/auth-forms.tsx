@@ -16,12 +16,12 @@ import { signInAction, signUpAction } from "@/lib/auth/actions"
 
 type AuthState = { error: string | null; message?: string } | null
 
-export function LoginForm({ nextPath }: { nextPath: string }) {
+export function LoginForm({ nextPath, initialError }: { nextPath: string; initialError?: string }) {
   async function action(_: AuthState, formData: FormData): Promise<AuthState> {
     return signInAction(formData)
   }
 
-  const [state, formAction, pending] = useActionState(action, null)
+  const [state, formAction, pending] = useActionState(action, initialError ? { error: initialError } : null)
 
   return (
     <Card className="w-full max-w-md">

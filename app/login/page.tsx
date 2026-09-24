@@ -5,9 +5,9 @@ import { LoginForm } from "@/components/auth/auth-forms"
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string }>
+  searchParams: Promise<{ next?: string; error?: string }>
 }) {
-  const { next } = await searchParams
+  const { next, error } = await searchParams
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -19,7 +19,10 @@ export default async function LoginPage({
         </div>
       </header>
       <main className="flex flex-1 items-center justify-center px-4 py-12">
-        <LoginForm nextPath={next && next.startsWith("/") ? next : "/dashboard"} />
+        <LoginForm
+          nextPath={next && next.startsWith("/") ? next : "/dashboard"}
+          initialError={error}
+        />
       </main>
     </div>
   )

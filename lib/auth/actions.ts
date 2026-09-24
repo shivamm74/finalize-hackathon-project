@@ -1,5 +1,6 @@
 "use server"
 
+import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import type { Profile, UserRole } from "@/types/profile"
@@ -44,8 +45,17 @@ export async function signUpAction(formData: FormData) {
     return { error: "Password must be at least 6 characters." }
   }
 
+  if (!/^\S+@\S+\.\S+$/.test(email)) {
+    return { error: "Enter a valid email address." }
+  }
+
   const supabase = await createClient()
-  const origin = process.env.NEXT_PUBLIC_SITE_URL
+  const requestHeaders = await headers()
+  const forwardedHost = requestHeaders.get("x-forwarded-host")
+  const forwardedProto = requestHeaders.get("x-forwarded-proto") ?? "https"
+  const origin = forwardedHost
+    ? `${forwardedProto}://${forwardedHost}`
+    : requestHeaders.get("origin") ?? "http://localhost:3000"
 
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -61,7 +71,10 @@ export async function signUpAction(formData: FormData) {
   })
 
   if (error) {
-    return { error: error.message }
+    const message = error.message.toLowerCase().includes("already registered")
+      ? "This email is already registered. Sign in instead."
+      : error.message
+    return { error: message }
   }
 
   if (!data.session) {
