@@ -129,6 +129,8 @@ export async function updateProfileAction(formData: FormData) {
   const { error } = await supabase
     .from("profiles")
     .upsert({
+      id: user.id,
+      email: user.email ?? null,
       display_name: displayName || user.email?.split("@")[0] || "New user",
       organization_name: organizationName || null,
       phone: phone || null,

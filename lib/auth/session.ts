@@ -10,25 +10,26 @@ function asRole(value: unknown): UserRole {
 }
 
 export async function getCurrentProfile(): Promise<Profile | null> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
-  if (!user) return null
+    if (!user) return null
 
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .maybeSingle()
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .maybeSingle()
 
-  if (data) return data as Profile
-  if (error && !error.message.toLowerCase().includes("schema cache")) {
-    console.error("[v0] Profile lookup failed:", error.message)
-  }
+    if (data) return data as Profile
+    if (error && !error.message.toLowerCase().includes("schema cache")) {
+      console.error("[v0] Profile lookup failed:", error.message)
+    }
 
-  const fallback: Profile = {
+    const fallback: Profile = {
     id: user.id,
     email: user.email ?? null,
     display_name:
@@ -57,5 +58,10 @@ export async function getCurrentProfile(): Promise<Profile | null> {
     console.error("[v0] Profile persistence failed:", upsertError.message)
   }
 
-  return fallback
+    return fallback
+  } catch (error) {
+    console.error("[v0] Profile session unavailable:", error)
+    return null
+  }
 }
+
