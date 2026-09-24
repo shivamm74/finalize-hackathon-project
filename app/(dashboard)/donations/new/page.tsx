@@ -27,7 +27,7 @@ export default function NewDonationPage() {
     setResult(analyzeDonationText(text))
   }
 
-  function post() {
+  async function post() {
     if (!result) return
     const base = seed[0]
     const n = 1050 + Math.floor(Math.random() * 900)
@@ -40,9 +40,13 @@ export default function NewDonationPage() {
       status: "needs_match", recipientId: undefined, volunteerId: undefined, matchScore: undefined,
       description: text,
     }
-    addDonation(d)
-    toast.success(`${d.code} posted`)
-    router.push(`/donations/${d.id}`)
+    try {
+      const saved = await addDonation(d)
+      toast.success(`${saved.code} posted and saved`)
+      router.push(`/donations/${saved.id}`)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not save donation")
+    }
   }
 
   return (
