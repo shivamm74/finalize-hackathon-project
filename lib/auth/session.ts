@@ -17,13 +17,16 @@ export async function getCurrentProfile(): Promise<Profile | null> {
 
   if (!user) return null
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("profiles")
     .select("*")
     .eq("id", user.id)
     .maybeSingle()
 
   if (data) return data as Profile
+  if (error && !error.message.toLowerCase().includes("schema cache")) {
+    console.error("[v0] Profile lookup failed:", error.message)
+  }
 
   const fallback: Profile = {
     id: user.id,
@@ -41,7 +44,7 @@ export async function getCurrentProfile(): Promise<Profile | null> {
     updated_at: user.created_at,
   }
 
-  await supabase.from("profiles").upsert({
+  const { error: upsertError } = await supabase.from("profiles").upsert({
     id: fallback.id,
     email: fallback.email,
     display_name: fallback.display_name,
@@ -49,6 +52,10 @@ export async function getCurrentProfile(): Promise<Profile | null> {
     organization_name: fallback.organization_name,
     avatar_initials: fallback.avatar_initials,
   })
+
+  if (upsertError && !upsertError.message.toLowerCase().includes("schema cache")) {
+    console.error("[v0] Profile persistence failed:", upsertError.message)
+  }
 
   return fallback
 }
