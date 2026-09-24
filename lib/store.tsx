@@ -67,16 +67,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [supabase])
 
   const addDonation = useCallback(async (d: Donation) => {
-    let { data: { user } } = await supabase.auth.getUser()
+    const current = await supabase.auth.getSession()
+    let user = current.data.session?.user ?? null
 
-    // Refresh once because a valid server-rendered session can be stale in the
-    // browser client immediately after login or email confirmation.
     if (!user) {
       const refreshed = await supabase.auth.refreshSession()
-      user = refreshed.data.user
+      user = refreshed.data.session?.user ?? null
     }
 
-    if (!user) throw new Error("Your session expired. Refresh the page and sign in again.")
+    if (!user) throw new Error("Your session expired. Please sign in again in this browser tab.")
 
     const { data, error } = await supabase.from("donations").insert({
       code: d.code, created_by: user.id, donor_name: d.donor.name, donor_type: d.donor.type,
