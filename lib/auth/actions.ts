@@ -1,6 +1,7 @@
 "use server"
 
 import { headers } from "next/headers"
+import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { createClient as createSupabaseClient } from "@supabase/supabase-js"
@@ -125,6 +126,12 @@ export async function updateProfileAction(formData: FormData) {
   const organizationName = String(formData.get("organization_name") ?? "").trim()
   const phone = String(formData.get("phone") ?? "").trim()
   const role = asRole(formData.get("role"))
+  if (displayName.length > 80 || organizationName.length > 120) {
+    return { error: "Name and organization must be within the allowed length." }
+  }
+  if (phone && !/^\+?[0-9 ()-]{7,20}$/.test(phone)) {
+    return { error: "Enter a valid phone number." }
+  }
 
   const { error } = await supabase
     .from("profiles")
@@ -137,11 +144,12 @@ export async function updateProfileAction(formData: FormData) {
       role,
       avatar_initials: (displayName || user.email || "U").slice(0, 2).toUpperCase(),
     })
-    .eq("id", user.id)
 
   if (error) {
     return { error: error.message }
   }
 
+  revalidatePath("/settings")
+  revalidatePath("/dashboard")
   return { error: null, message: "Profile saved." }
 }

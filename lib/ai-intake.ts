@@ -20,8 +20,16 @@ export function analyzeDonationText(raw: string): AIAnalysis {
     throw new Error("Enter a valid food description, such as ‘45 meals of dal rice and vegetables’." )
   }
 
-  const mealMatch = text.match(/(\d+)\s*(meals?|trays?|portions?|boxes?|items?)/)
-  const estimatedMeals = mealMatch ? Number(mealMatch[1]) : 45
+  const quantityMatch = text.match(/\b(\d+(?:\.\d+)?)\s*(meals?|trays?|portions?|boxes?|items?)\b/i)
+  const estimatedMeals = quantityMatch ? Number(quantityMatch[1]) : 45
+  const foodDetails = normalized
+    .replace(/\b\d+(?:\.\d+)?\s*(meals?|trays?|portions?|boxes?|items?)\b/gi, "")
+    .replace(/\b(prepared|pickup|pick up|from|today|yesterday|ago|vegetarian|vegan|halal|gluten[- ]free|non[- ]veg(?:etarian)?)\b/gi, "")
+    .replace(/[,.()-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+  const foodName = foodDetails || "Prepared food"
+
   if (!Number.isSafeInteger(estimatedMeals) || estimatedMeals < 1 || estimatedMeals > 1_000_000_000) {
     throw new Error("Enter a quantity between 1 and 1,000,000,000.")
   }
@@ -34,17 +42,14 @@ export function analyzeDonationText(raw: string): AIAnalysis {
   if (text.includes("non-veg") || text.includes("chicken") || text.includes("meat")) {
     dietary.push("non_vegetarian")
   }
-  if (dietary.length === 0) dietary.push("vegetarian")
-
   const urgency: AIAnalysis["urgency"] =
     estimatedMeals >= 40 || text.includes("lunch") ? "high" : "medium"
 
   const safe = new Date(Date.now() + 102 * 60000)
 
   return {
-    foodType: dietary.includes("vegetarian") && !dietary.includes("non_vegetarian")
-      ? "Vegetarian meals"
-      : "Prepared meals",
+    foodType: foodName,
+    details: foodName,
     estimatedMeals,
     dietary,
     urgency,

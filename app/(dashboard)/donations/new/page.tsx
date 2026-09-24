@@ -79,8 +79,10 @@ export default function NewDonationPage() {
       {result && (
         <Card>
           <CardHeader>
-            <CardTitle>{result.foodType} · {result.estimatedMeals} meals</CardTitle>
-            <CardDescription>Confidence {Math.round(result.confidence * 100)}%</CardDescription>
+            <CardTitle>{result.estimatedMeals} {result.estimatedMeals === 1 ? "meal" : "meals"} · {result.foodType}</CardTitle>
+            <CardDescription>
+              Detected food: {result.details ?? result.foodType} · Confidence {Math.round(result.confidence * 100)}%
+            </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center gap-2">

@@ -118,6 +118,7 @@ export interface Match {
 
 export interface AIAnalysis {
   foodType: string
+  details?: string
   estimatedMeals: number
   dietary: DietaryType[]
   urgency: Urgency
