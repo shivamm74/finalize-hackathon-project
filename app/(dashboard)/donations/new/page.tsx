@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
 import { Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -17,6 +18,7 @@ const sample = "45 vegetarian lunch meals, dal rice and sabzi, prepared 1 hour a
 
 export default function NewDonationPage() {
   const router = useRouter()
+  const supabase = createClient()
   const [text, setText] = useState("")
   const [result, setResult] = useState<AIAnalysis | null>(null)
 
@@ -44,9 +46,17 @@ export default function NewDonationPage() {
       description: text,
     }
     try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        toast.error("Your login session is unavailable. Please sign in again in this tab.")
+        return
+      }
       const response = await fetch("/api/donations", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify(d),
       })
       const payload = await response.json()

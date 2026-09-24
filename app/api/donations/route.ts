@@ -5,7 +5,11 @@ import type { Donation } from "@/types"
 export async function POST(request: Request) {
   try {
     const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    const authorization = request.headers.get("authorization")
+    const accessToken = authorization?.match(/^Bearer\s+(.+)$/i)?.[1]
+    const { data: { user }, error: authError } = accessToken
+      ? await supabase.auth.getUser(accessToken)
+      : await supabase.auth.getUser()
     if (authError || !user) {
       return NextResponse.json({ error: "Your login session is not available. Please sign in again." }, { status: 401 })
     }
