@@ -57,6 +57,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     async function load() {
       const { data, error } = await supabase.from("donations").select("*").order("created_at", { ascending: false })
       if (active && !error && data) setDonations(data.map(donationFromRow))
+      if (error && !error.message.toLowerCase().includes("schema cache")) {
+        console.error("[v0] Could not load donations:", error.message)
+      }
       setLoading(false)
     }
     void load()
