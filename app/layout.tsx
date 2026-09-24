@@ -1,36 +1,21 @@
-import { Analytics } from '@vercel/analytics/next'
-import type { Metadata, Viewport } from 'next'
-import './globals.css'
+import { Analytics } from "@vercel/analytics/next"
+import type { Metadata, Viewport } from "next"
+import { Toaster } from "@/components/ui/sonner"
+import { Providers } from "@/components/providers"
+import "./globals.css"
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
-  generator: 'v0.app',
-  icons: {
-    icon: [
-      {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
-      },
-    ],
-    apple: '/apple-icon.png',
+  title: {
+    default: "FoodFlow — Real-Time Food Rescue & Redistribution",
+    template: "%s · FoodFlow",
   },
+  description:
+    "FoodFlow connects surplus food from restaurants and cafeterias with nearby shelters and volunteers in real time — matching donations by capacity, food type, urgency and distance.",
 }
 
 export const viewport: Viewport = {
-  colorScheme: 'light dark',
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: 'white' },
-    { media: '(prefers-color-scheme: dark)', color: 'black' },
-  ],
+  colorScheme: "light",
+  themeColor: "#ffffff",
 }
 
 export default function RootLayout({
@@ -39,10 +24,13 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="light">
       <body className="antialiased">
-        {children}
-        {process.env.NODE_ENV === 'production' && <Analytics />}
+        <Providers>
+          {children}
+          <Toaster />
+        </Providers>
+        {process.env.NODE_ENV === "production" && <Analytics />}
       </body>
     </html>
   )
