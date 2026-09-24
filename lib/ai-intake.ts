@@ -21,7 +21,8 @@ export function analyzeDonationText(raw: string): AIAnalysis {
   }
 
   const quantityMatch = text.match(/\b(\d+(?:\.\d+)?)\s*(meals?|trays?|portions?|boxes?|items?)\b/i)
-  const estimatedMeals = quantityMatch ? Number(quantityMatch[1]) : 45
+  if (!quantityMatch) throw new Error("Include a quantity, such as ‘20 meals’ or ‘3 trays’.")
+  const estimatedMeals = Number(quantityMatch[1])
   const foodDetails = normalized
     .replace(/\b\d+(?:\.\d+)?\s*(meals?|trays?|portions?|boxes?|items?)\b/gi, "")
     .replace(/\b(prepared|pickup|pick up|from|today|yesterday|ago|vegetarian|vegan|halal|gluten[- ]free|non[- ]veg(?:etarian)?)\b/gi, "")

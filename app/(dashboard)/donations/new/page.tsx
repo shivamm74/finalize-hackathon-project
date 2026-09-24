@@ -10,15 +10,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { PageHeader } from "@/components/shared/page-header"
 import { DietaryBadges, UrgencyBadge } from "@/components/shared/meta-badges"
 import { analyzeDonationText } from "@/lib/ai-intake"
+import { createDonationAction } from "@/lib/donations/actions"
 import { donations as seed } from "@/lib/mock-data"
-import { useStore } from "@/lib/store"
 import type { AIAnalysis, Donation } from "@/types"
 
 const sample = "45 vegetarian lunch meals, dal rice and sabzi, prepared 1 hour ago, halal, pickup from Hotel Rajdhani"
 
 export default function NewDonationPage() {
   const router = useRouter()
-  const { addDonation } = useStore()
   const [text, setText] = useState("")
   const [result, setResult] = useState<AIAnalysis | null>(null)
 
@@ -46,9 +45,13 @@ export default function NewDonationPage() {
       description: text,
     }
     try {
-      const saved = await addDonation(d)
-      toast.success(`${saved.code} posted and saved`)
-      router.push(`/donations/${saved.id}`)
+      const response = await createDonationAction(d)
+      if (response.error || !response.donation) {
+        toast.error(response.error ?? "Could not save donation")
+        return
+      }
+      toast.success(`${d.code} posted and saved`)
+      router.push(`/donations/${response.donation.id}`)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not save donation")
     }
